@@ -1,96 +1,92 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
-vim.o.number = true
-vim.o.mouse = 'a'
-vim.o.showmode = false
-vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
-vim.o.breakindent = true
-vim.o.undofile = true
-vim.o.ignorecase = true
-vim.o.smartcase = true
-vim.o.signcolumn = 'yes'
-vim.o.updatetime = 250
-vim.o.timeoutlen = 300
-vim.o.splitright = true
-vim.o.splitbelow = true
-vim.o.cursorline = true
-vim.o.scrolloff = 8
+local o = vim.o
+o.number = true
+o.mouse = 'a'
+o.showmode = false
+o.breakindent = true
+o.undofile = true
+o.ignorecase = true
+o.smartcase = true
+o.signcolumn = 'yes'
+o.updatetime = 250
+o.timeoutlen = 300
+o.splitright = true
+o.splitbelow = true
+o.cursorline = true
+o.scrolloff = 8
 
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
-vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeToggle<CR>')
-vim.keymap.set('n', '<leader>ff', '<cmd>Telescope find_files<CR>')
-vim.keymap.set('n', '<leader>fg', '<cmd>Telescope live_grep<CR>')
+vim.schedule(function() o.clipboard = 'unnamedplus' end)
 
--- Lazy.nvim
+local map = vim.keymap.set
+map('n', '<Esc>', '<cmd>nohlsearch<CR>')
+map('n', '<leader>e', '<cmd>NvimTreeToggle<CR>', { desc = 'File explorer' })
+map('n', '<leader>ff', '<cmd>Telescope find_files<CR>', { desc = 'Find files' })
+map('n', '<leader>fg', '<cmd>Telescope live_grep<CR>', { desc = 'Live grep' })
+map('n', '<S-h>', '<cmd>bprevious<CR>', { desc = 'Previous buffer' })
+map('n', '<S-l>', '<cmd>bnext<CR>', { desc = 'Next buffer' })
+map('n', '<leader>bd', '<cmd>bdelete<CR>', { desc = 'Delete buffer' })
+map('n', '<leader>bl', '<cmd>Telescope buffers<CR>', { desc = 'List buffers' })
+
+-- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    'git','clone','--filter=blob:none',
-    'https://github.com/folke/lazy.nvim.git',
-    lazypath
-  })
+if not vim.uv.fs_stat(lazypath) then
+  vim.fn.system({ 'git', 'clone', '--filter=blob:none', 'https://github.com/folke/lazy.nvim.git', lazypath })
 end
 vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup({
 
-  { 'folke/tokyonight.nvim', priority = 1000,
+  { 'projekt0n/github-nvim-theme',
+    name = 'github-theme',
+    lazy = false,
+    priority = 1000,
     config = function()
-      vim.cmd.colorscheme 'tokyonight-night'
-    end
-  },
-
-  { 'nvim-tree/nvim-web-devicons' },
-
-  { 'nvim-lualine/lualine.nvim',
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
-    config = function()
-      require('lualine').setup { options = { theme = 'tokyonight' } }
-    end
-  },
-
-  { 'nvim-tree/nvim-tree.lua',
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
-    config = function()
-      require('nvim-tree').setup({})
-    end
-  },
-
-  { 'nvim-lua/plenary.nvim' },
-
-  { 'nvim-telescope/telescope.nvim',
-    dependencies = { 'nvim-lua/plenary.nvim' },
-    config = function()
-      require('telescope').setup({})
-    end
-  },
-
-  { 'lewis6991/gitsigns.nvim', opts = {} },
-
-  { 'folke/which-key.nvim', event = 'VimEnter', opts = {} },
-
-  -- ✅ TREESITTER (GUARDED, WILL NOT CRASH)
-  {
-    'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
-    config = function()
-      local ok, ts = pcall(require, 'nvim-treesitter.configs')
-      if not ok then
-        vim.notify('Treesitter not loaded, skipping setup', vim.log.levels.WARN)
-        return
-      end
-      ts.setup {
-        ensure_installed = { 'lua', 'python', 'javascript', 'html', 'css', 'bash' },
-        auto_install = true,
-        highlight = { enable = true },
-        indent = { enable = true },
-      }
+      require('github-theme').setup({})
+      vim.cmd.colorscheme('github_dark_default')
     end,
   },
 
+  { 'nvim-tree/nvim-web-devicons', lazy = true },
+
+  { 'nvim-lualine/lualine.nvim',
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    opts = { options = { theme = 'auto' } },
+  },
+
+  { 'nvim-tree/nvim-tree.lua',
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    cmd = { 'NvimTreeToggle', 'NvimTreeFocus' },
+    opts = {},
+  },
+
+  { 'nvim-telescope/telescope.nvim',
+    dependencies = 'nvim-lua/plenary.nvim',
+    cmd = 'Telescope',
+    opts = {},
+  },
+
+  { 'lewis6991/gitsigns.nvim', event = 'BufReadPre', opts = {} },
+
+  { 'folke/which-key.nvim', event = 'VimEnter', opts = {} },
+
+  { 'nvim-treesitter/nvim-treesitter',
+    build = ':TSUpdate',
+    event = 'BufReadPost',
+    opts = {
+      ensure_installed = { 'lua', 'python', 'javascript', 'typescript', 'html', 'css', 'bash' },
+      auto_install = true,
+      highlight = { enable = true },
+      indent = { enable = true },
+    },
+  },
+
+  { 'windwp/nvim-autopairs', event = 'InsertEnter', opts = {} },
+
   { 'neovim/nvim-lspconfig',
+    event = 'BufReadPre',
     dependencies = {
       { 'mason-org/mason.nvim', opts = {} },
       'mason-org/mason-lspconfig.nvim',
@@ -108,9 +104,7 @@ require('lazy').setup({
       require('mason-lspconfig').setup {
         handlers = {
           function(server)
-            require('lspconfig')[server].setup {
-              capabilities = capabilities,
-            }
+            require('lspconfig')[server].setup { capabilities = capabilities }
           end,
         },
       }
@@ -119,13 +113,11 @@ require('lazy').setup({
 
   { 'saghen/blink.cmp',
     version = '1.*',
-    event = 'InsertEnter',
-    dependencies = { 'L3MON4D3/LuaSnip' },
+    dependencies = 'L3MON4D3/LuaSnip',
     opts = {
       sources = { default = { 'lsp', 'path', 'snippets' } },
       fuzzy = { implementation = 'lua' },
-    }
+    },
   },
 
-}, {})
-
+})
